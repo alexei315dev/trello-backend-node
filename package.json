@@ -1,33 +1,28 @@
 {
-  "name": "node",
+  "name": "trelloclone",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A Trello clone built using the MERN stack.",
+  "main": "server.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon ./app.js PORT=4000",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server",
+    "server": "nodemon server",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm run server\"",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "@google-cloud/storage": "^5.7.3",
-    "bcrypt": "^5.0.0",
-    "body-parser": "^1.19.0",
-    "chalk": "^4.1.0",
-    "cookie-parser": "^1.4.5",
-    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "express-validator": "^6.9.2",
+    "express-validator": "^6.6.1",
+    "gravatar": "^1.8.1",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.11.13",
-    "morgan": "^1.10.0",
-    "node-fetch": "^2.6.1",
-    "nodemon": "^2.0.7",
-    "passport": "^0.4.1",
-    "trello": "^0.10.0",
-    "trello-node-api": "0.0.9"
+    "mongoose": "^5.10.5",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "concurrently": "^5.3.0",
+    "nodemon": "^2.0.4"
   }
 }
