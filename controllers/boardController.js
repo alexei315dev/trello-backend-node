@@ -1,6 +1,7 @@
 const chalk = require("chalk");
 const Board = require('../models/Board');
 const User = require('../models/User');
+const trelloController = require('./trelloController');
 
 module.exports = {
   createBoard: async (req, res) => {
@@ -25,6 +26,8 @@ module.exports = {
           text: `${user.username} created this board`,
         });
         await board.save();
+
+        trelloController.createBoard({ name: board.title });
   
         res.status(200).json({
             success: true,
