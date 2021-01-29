@@ -1,57 +1,75 @@
-const chalk = require("chalk");
-const passport = require('passport');
-const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
-require('../auth/auth');
 
-exports.loginUser = async (req, res, next) => {
-    passport.authenticate('login',
-        async (err, user, info) => {
-          try {
-            if (err || !user) {
-              const error = new Error('An error occurred.');
-              return next(error);
-            }
-            req.login(
-              user,
-              { session: false },
-              async (error) => {
-                if (error) return next(error);
-                const token = await user.generateAuthToken();
-                return res.json({ token, user });
-              }
-            );
-          } catch (error) {
-            return next(error);
-          }
-        }
-    )(req, res, next);
-}
+module.exports = {
+  registerUser: async (req, res) => {
+    //checking if the user is already in the db
+    const emailExist = await User.findOne({ email: req.body.email });
+    if(emailExist) return res.status(400).send('Email already exist');
 
-exports.registerUser = (req, res, next) => {
-    passport.authenticate('signup', 
-        async (err, user, info) => {
-            res.json({
-                message: 'Signup successful',
-                user: user
-            });
-        },
-        { session: false }
-    )(req, res, next);
-}
+    //Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(req.body.password, salt);
 
-exports.getUser = async (req, res, next) => {
-  try {
-    const reqUser = jwt.verify(req.header('authorization').split(' ')[1], process.env.TOKEN_SECRET);
-    const user = await User.findById(reqUser.user._id);
-    res.status(200).json({
-      success: true,
-      data: user
-    });
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      error: error
+    const user = new User({
+      username: req.body.username,
+      email: req.body.email,
+      password: hashPassword
     })
+
+    //create a new user
+    try {
+      const savedUser = await user.save();
+      const token = await savedUser.generateAuthToken();
+      res.status(200).json({
+        success: true,
+        token: token
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: 'register user failed',
+        error: error
+      })
+    }
+  },
+
+  loginUser: async (req, res) => {
+    try {
+      const user = await User.findOne({ email: req.body.email });
+      if(!user) return res.status(400).json('Email is not found');
+
+      const validPass = await user.isValidPassword(req.body.password);
+      if (!validPass) return res.status(400).json('Invalid Password');
+
+      const token = await user.generateAuthToken();
+      
+      res.status(200).json({
+        success: true,
+        token: token
+      })
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: error
+      })
+    }
+  },
+
+  getUser: async (req, res) => {
+    try {
+      const token = req.header('authorization').split(' ')[1];
+      const user = await User.findOne({ token: token });
+      if(!user) res.status(400).json('invalid');
+      res.status(200).json({
+        success: true,
+        user: user
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: error
+      })
+    }
   }
 }

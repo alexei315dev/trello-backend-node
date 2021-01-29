@@ -35,25 +35,22 @@ const userSchema = mongoose.Schema({
         required: false
     },
     create_date: { type: Date, default: Date.now },
+    boards: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'boards',
+      },
+    ],
     token: {
       type: String,
       required: false
     }
 });
 
-userSchema.pre('save',
-    async function(next) {
-        const user = this;
-        const hash = await bcrypt.hash(this.password, 10);
-        this.password = hash;
-        next();
-    }
-);
-
 userSchema.methods.isValidPassword = async function(password) {
-    const user = this;
-    const compare = await bcrypt.compare(password, user.password);
-    return compare;
+  const user = this;
+  const compare = await bcrypt.compare(password, user.password);
+  return compare;
 }
 
 userSchema.methods.generateAuthToken = async function () {
@@ -61,7 +58,8 @@ userSchema.methods.generateAuthToken = async function () {
   const token = jwt.sign({
     _id: user._id,
     username: user.username,
-    email: user.email
+    email: user.email,
+    password: user.password
   }, process.env.TOKEN_SECRET);
   user.token = token;
   await user.save();
